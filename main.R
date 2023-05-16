@@ -148,6 +148,6 @@ while (TRUE)
     slackr_bot1(added_transactions, incoming_webhook_url = webhook)
   }
   print("waiting...")
-  Sys.sleep(60)
+  Sys.sleep(90)
 }
 
