@@ -128,14 +128,14 @@ while (TRUE)
   y$TRANSACTION_TYPE[which(y$TRANSACTION_TYPE == 'Signing' & grepl("signed a Contract",y$TRANSACTION_DESCRIPTION))] = 'Signed Standard Contract'
   
   new_compare = y[,c(3,2)]
-  old_compare = read.csv("last_update.csv",row.names = 1)
+  old_compare = read.csv("home/pi/WNBA-Transactions/last_update.csv",row.names = 1)
   
   new_rows <- sqldf('SELECT * FROM new_compare EXCEPT SELECT * FROM old_compare')
   deleted_rows <- sqldf('SELECT * FROM old_compare EXCEPT SELECT * FROM new_compare')
   deleted_transactions = capture.output(invisible(apply(deleted_rows[,1:2], 1,cat, "\n")))
   added_transactions = capture.output(invisible(apply(new_rows[,1:2], 1,cat, "\n")))
   
-  write.csv(new_compare,'last_update.csv')
+  write.csv(new_compare,'home/pi/WNBA-Transactions/last_update.csv')
   
   webhook = "https://hooks.slack.com/services/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"
   
