@@ -94,54 +94,59 @@ slackr_bot1 <- function(...,
   return(invisible())
 }
 
-x = fromJSON(file="https://cdn.wnba.com/static/json/staticData/WNBATransactions.json")
-y = as.data.frame(x[1])
-for (a in 2:length(x))
+while (true)
 {
-  y = rbind(y,as.data.frame(x[a]))
+  x = fromJSON(file="https://cdn.wnba.com/static/json/staticData/WNBATransactions.json")
+  y = as.data.frame(x[1])
+  for (a in 2:length(x))
+  {
+    y = rbind(y,as.data.frame(x[a]))
+  }
+  
+  y$TEAM_SLUG[which(y$TEAM_SLUG == 'stars')] = 'aces'
+  y$TRANSACTION_TYPE[which(y$TRANSACTION_TYPE == 'Other' & grepl("exercised their option",y$TRANSACTION_DESCRIPTION))] = 'Option'
+  y$TRANSACTION_TYPE[which(y$TRANSACTION_TYPE == 'Other' & grepl("extended a.*qualifying offer",y$TRANSACTION_DESCRIPTION))] = 'Qualifying Offer'
+  y$TRANSACTION_TYPE[which(y$TRANSACTION_TYPE == 'Other' & grepl("was set active",y$TRANSACTION_DESCRIPTION))] = 'Activated'
+  y$TRANSACTION_TYPE[which(y$TRANSACTION_TYPE == 'Other' & grepl("temporarily suspended",y$TRANSACTION_DESCRIPTION))] = 'Temp Suspension'
+  y$TRANSACTION_TYPE[which(y$TRANSACTION_TYPE == 'Other' & grepl("suspended for the full season",y$TRANSACTION_DESCRIPTION))] = 'Team Full Suspension'
+  y$TRANSACTION_TYPE[which(y$TRANSACTION_TYPE == 'Other' & grepl("Pregnancy/Childbirth",y$TRANSACTION_DESCRIPTION))] = 'Pregnancy/Childbirth'
+  y$TRANSACTION_TYPE[which(y$TRANSACTION_TYPE == 'Other' & grepl("season due to a Personal Decision",y$TRANSACTION_DESCRIPTION))] = 'Personal Full Suspension'
+  y$TRANSACTION_TYPE[which(y$TRANSACTION_TYPE == 'Other' & grepl("season due to a Non-WNBA Injury",y$TRANSACTION_DESCRIPTION))] = 'Injury Full Suspension'
+  y$TRANSACTION_TYPE[which(y$TRANSACTION_TYPE == 'Signing' & grepl("Contract Extension",y$TRANSACTION_DESCRIPTION))] = 'Contract Extension'
+  y$TRANSACTION_TYPE[which(y$TRANSACTION_TYPE == 'Released' & grepl("renounced their rights",y$TRANSACTION_DESCRIPTION))] = 'Renounced Rights'
+  y$TRANSACTION_TYPE[which(y$TRANSACTION_TYPE == 'Released' & grepl("voluntarily retired",y$TRANSACTION_DESCRIPTION))] = 'Retired'
+  y$TRANSACTION_TYPE[which(y$TRANSACTION_TYPE == 'Signing' & grepl("Training Camp Contract",y$TRANSACTION_DESCRIPTION))] = 'Signed TCC'
+  y$TRANSACTION_TYPE[which(y$TRANSACTION_TYPE == 'Signing' & grepl("Rookie Scale Contract",y$TRANSACTION_DESCRIPTION))] = 'Signed Rookie Scale'
+  y$TRANSACTION_TYPE[which(y$TRANSACTION_TYPE == 'Signing' & grepl("Contract Amendment - Divorce",y$TRANSACTION_DESCRIPTION))] = 'Contract Amendment - Divorce'
+  y$TRANSACTION_TYPE[which(y$TRANSACTION_TYPE == 'Signing' & grepl("Contract Amendment - Time-Off Bonus",y$TRANSACTION_DESCRIPTION))] = 'Contract Amendment - Time-Off Bonus'
+  y$TRANSACTION_TYPE[which(y$TRANSACTION_TYPE == 'Signing' & grepl("Contract Amendment - Trade Bonus",y$TRANSACTION_DESCRIPTION))] = 'Contract Amendment - Trade Bonus'
+  y$TRANSACTION_TYPE[which(y$TRANSACTION_TYPE == 'Signing' & grepl("Core Contract",y$TRANSACTION_DESCRIPTION))] = 'Signed Core Contract'
+  y$TRANSACTION_TYPE[which(y$TRANSACTION_TYPE == 'Signing' & grepl("signed a Contract",y$TRANSACTION_DESCRIPTION))] = 'Signed Standard Contract'
+  y$TRANSACTION_TYPE[which(y$TRANSACTION_TYPE == 'Signing' & grepl("Rest-of-Season Hardship Contract",y$TRANSACTION_DESCRIPTION))] = 'Signed ROS Hardship Contract'
+  y$TRANSACTION_TYPE[which(y$TRANSACTION_TYPE == 'Signing' & grepl("Rest-of-Season Contract",y$TRANSACTION_DESCRIPTION))] = 'Signed ROS Standard Contract'
+  y$TRANSACTION_TYPE[which(y$TRANSACTION_TYPE == 'Signing' & grepl("7-Day Contract",y$TRANSACTION_DESCRIPTION))] = 'Signed 7-Day Contract'
+  y$TRANSACTION_TYPE[which(y$TRANSACTION_TYPE == 'Signing' & grepl("signed a Contract",y$TRANSACTION_DESCRIPTION))] = 'Signed Standard Contract'
+  
+  new_compare = y[,c(3,2)]
+  old_compare = read.csv("last_update.csv",row.names = 1)
+  
+  new_rows <- sqldf('SELECT * FROM new_compare EXCEPT SELECT * FROM old_compare')
+  deleted_rows <- sqldf('SELECT * FROM old_compare EXCEPT SELECT * FROM new_compare')
+  deleted_transactions = capture.output(invisible(apply(deleted_rows[,1:2], 1,cat, "\n")))
+  added_transactions = capture.output(invisible(apply(new_rows[,1:2], 1,cat, "\n")))
+  
+  write.csv(new_compare,'last_update.csv')
+  
+  webhook = "https://hooks.slack.com/services/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"
+  
+  if (length(deleted_transactions) > 1 || deleted_transactions != "FALSE FALSE ")
+  {
+    slackr_bot1(deleted_transactions, incoming_webhook_url = webhook)
+  }
+  if (length(added_transactions) > 1 ||added_transactions != "FALSE FALSE ")
+  {
+    slackr_bot1(added_transactions, incoming_webhook_url = webhook)
+  }
+  Sys.sleep(120)
 }
 
-y$TEAM_SLUG[which(y$TEAM_SLUG == 'stars')] = 'aces'
-y$TRANSACTION_TYPE[which(y$TRANSACTION_TYPE == 'Other' & grepl("exercised their option",y$TRANSACTION_DESCRIPTION))] = 'Option'
-y$TRANSACTION_TYPE[which(y$TRANSACTION_TYPE == 'Other' & grepl("extended a.*qualifying offer",y$TRANSACTION_DESCRIPTION))] = 'Qualifying Offer'
-y$TRANSACTION_TYPE[which(y$TRANSACTION_TYPE == 'Other' & grepl("was set active",y$TRANSACTION_DESCRIPTION))] = 'Activated'
-y$TRANSACTION_TYPE[which(y$TRANSACTION_TYPE == 'Other' & grepl("temporarily suspended",y$TRANSACTION_DESCRIPTION))] = 'Temp Suspension'
-y$TRANSACTION_TYPE[which(y$TRANSACTION_TYPE == 'Other' & grepl("suspended for the full season",y$TRANSACTION_DESCRIPTION))] = 'Team Full Suspension'
-y$TRANSACTION_TYPE[which(y$TRANSACTION_TYPE == 'Other' & grepl("Pregnancy/Childbirth",y$TRANSACTION_DESCRIPTION))] = 'Pregnancy/Childbirth'
-y$TRANSACTION_TYPE[which(y$TRANSACTION_TYPE == 'Other' & grepl("season due to a Personal Decision",y$TRANSACTION_DESCRIPTION))] = 'Personal Full Suspension'
-y$TRANSACTION_TYPE[which(y$TRANSACTION_TYPE == 'Other' & grepl("season due to a Non-WNBA Injury",y$TRANSACTION_DESCRIPTION))] = 'Injury Full Suspension'
-y$TRANSACTION_TYPE[which(y$TRANSACTION_TYPE == 'Signing' & grepl("Contract Extension",y$TRANSACTION_DESCRIPTION))] = 'Contract Extension'
-y$TRANSACTION_TYPE[which(y$TRANSACTION_TYPE == 'Released' & grepl("renounced their rights",y$TRANSACTION_DESCRIPTION))] = 'Renounced Rights'
-y$TRANSACTION_TYPE[which(y$TRANSACTION_TYPE == 'Released' & grepl("voluntarily retired",y$TRANSACTION_DESCRIPTION))] = 'Retired'
-y$TRANSACTION_TYPE[which(y$TRANSACTION_TYPE == 'Signing' & grepl("Training Camp Contract",y$TRANSACTION_DESCRIPTION))] = 'Signed TCC'
-y$TRANSACTION_TYPE[which(y$TRANSACTION_TYPE == 'Signing' & grepl("Rookie Scale Contract",y$TRANSACTION_DESCRIPTION))] = 'Signed Rookie Scale'
-y$TRANSACTION_TYPE[which(y$TRANSACTION_TYPE == 'Signing' & grepl("Contract Amendment - Divorce",y$TRANSACTION_DESCRIPTION))] = 'Contract Amendment - Divorce'
-y$TRANSACTION_TYPE[which(y$TRANSACTION_TYPE == 'Signing' & grepl("Contract Amendment - Time-Off Bonus",y$TRANSACTION_DESCRIPTION))] = 'Contract Amendment - Time-Off Bonus'
-y$TRANSACTION_TYPE[which(y$TRANSACTION_TYPE == 'Signing' & grepl("Contract Amendment - Trade Bonus",y$TRANSACTION_DESCRIPTION))] = 'Contract Amendment - Trade Bonus'
-y$TRANSACTION_TYPE[which(y$TRANSACTION_TYPE == 'Signing' & grepl("Core Contract",y$TRANSACTION_DESCRIPTION))] = 'Signed Core Contract'
-y$TRANSACTION_TYPE[which(y$TRANSACTION_TYPE == 'Signing' & grepl("signed a Contract",y$TRANSACTION_DESCRIPTION))] = 'Signed Standard Contract'
-y$TRANSACTION_TYPE[which(y$TRANSACTION_TYPE == 'Signing' & grepl("Rest-of-Season Hardship Contract",y$TRANSACTION_DESCRIPTION))] = 'Signed ROS Hardship Contract'
-y$TRANSACTION_TYPE[which(y$TRANSACTION_TYPE == 'Signing' & grepl("Rest-of-Season Contract",y$TRANSACTION_DESCRIPTION))] = 'Signed ROS Standard Contract'
-y$TRANSACTION_TYPE[which(y$TRANSACTION_TYPE == 'Signing' & grepl("7-Day Contract",y$TRANSACTION_DESCRIPTION))] = 'Signed 7-Day Contract'
-y$TRANSACTION_TYPE[which(y$TRANSACTION_TYPE == 'Signing' & grepl("signed a Contract",y$TRANSACTION_DESCRIPTION))] = 'Signed Standard Contract'
-
-new_compare = y[,c(3,2)]
-old_compare = read.csv("last_update.csv",row.names = 1)
-
-new_rows <- sqldf('SELECT * FROM new_compare EXCEPT SELECT * FROM old_compare')
-deleted_rows <- sqldf('SELECT * FROM old_compare EXCEPT SELECT * FROM new_compare')
-deleted_transactions = capture.output(invisible(apply(deleted_rows[,1:2], 1,cat, "\n")))
-added_transactions = capture.output(invisible(apply(new_rows[,1:2], 1,cat, "\n")))
-
-write.csv(new_compare,'last_update.csv')
-
-webhook = "https://hooks.slack.com/services/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"
-
-if (length(deleted_transactions) > 1 || deleted_transactions != "FALSE FALSE ")
-{
-  slackr_bot1(deleted_transactions, incoming_webhook_url = webhook)
-}
-if (length(added_transactions) > 1 ||added_transactions != "FALSE FALSE ")
-{
-  slackr_bot1(added_transactions, incoming_webhook_url = webhook)
-}
