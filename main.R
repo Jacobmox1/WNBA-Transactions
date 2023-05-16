@@ -147,6 +147,6 @@ while (TRUE)
   {
     slackr_bot1(added_transactions, incoming_webhook_url = webhook)
   }
-  Sys.sleep(120)
+  Sys.sleep(60)
 }
 
