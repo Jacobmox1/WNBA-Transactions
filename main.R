@@ -94,7 +94,7 @@ slackr_bot1 <- function(...,
   return(invisible())
 }
 
-while (true)
+while (TRUE)
 {
   x = fromJSON(file="https://cdn.wnba.com/static/json/staticData/WNBATransactions.json")
   y = as.data.frame(x[1])
