@@ -1,5 +1,5 @@
 options("install.lock"=FALSE)
-install.packages(c("rjson","slackr","sqldf","httr"))
+#install.packages(c("rjson","slackr","sqldf","httr"))
 library(rjson)
 library(slackr)
 library(sqldf)
