@@ -138,7 +138,7 @@ while (TRUE)
   #write.csv(new_compare,'home/pi/WNBA-Transactions/last_update.csv')
   write.csv(new_compare,'last_update.csv')
   
-  webhook = "https://hooks.slack.com/services/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"
+  webhook = readLines("webhook.txt")
   
   if (length(deleted_transactions) > 1 || deleted_transactions != "FALSE FALSE ")
   {
