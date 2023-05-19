@@ -138,15 +138,21 @@ while (TRUE)
   #write.csv(new_compare,'home/pi/WNBA-Transactions/last_update.csv')
   write.csv(new_compare,'last_update.csv')
   
-  webhook = readLines("webhook.txt")
+  the_next_webhook = readLines("C:/Users/jacob/Desktop/Transactions Log/webhook.txt")
+  hhs_webhook = readLines("C:/Users/jacob/Desktop/Transactions Log/webhook-hhs.txt")
+  
+  #the_next_webhook = readLines("home/pi/WNBA-Transactions/webhook.txt")
+  #hhs_webhook = readLines("home/pi/WNBA-Transactions/webhook-hhs.txt")
   
   if (length(deleted_transactions) > 1 || deleted_transactions != "FALSE FALSE ")
   {
-    slackr_bot1(deleted_transactions, incoming_webhook_url = webhook)
+    slackr_bot1(deleted_transactions, incoming_webhook_url = the_next_webhook)
+    slackr_bot1(deleted_transactions, incoming_webhook_url = hhs_webhook)
   }
   if (length(added_transactions) > 1 ||added_transactions != "FALSE FALSE ")
   {
-    slackr_bot1(added_transactions, incoming_webhook_url = webhook)
+    slackr_bot1(added_transactions, incoming_webhook_url = the_next_webhook)
+    slackr_bot1(added_transactions, incoming_webhook_url = hhs_webhook)
   }
   print("waiting...")
   Sys.sleep(90)
